@@ -5,6 +5,11 @@ import base64
 from fpdf import FPDF
 
 # --- CONFIGURAZIONE DATABASE (SUPABASE) ---
+if "SUPABASE_URL" in st.secrets:
+    st.sidebar.success("Connessione Database: OK")
+else:
+    st.error("Errore: Chiavi non trovate nel file secrets.toml")
+
 URL_SUPABASE = st.secrets["SUPABASE_URL"]
 KEY_SUPABASE = st.secrets["SUPABASE_KEY"]
 
@@ -34,15 +39,22 @@ def verifica_limite_demo(autore_nome):
         return len(res.json()) if res.status_code == 200 else 0
     except: return 0
 
+# CORREZIONE RIGA 52: Pulizia caratteri e rimozione .encode() errato
 def esporta_pdf(titolo, testo, autore):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Times", 'B', 22)
-    pdf.cell(0, 20, titolo.upper(), ln=True, align='C')
+    # Usiamo Arial per maggiore compatibilità
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, titolo.upper(), ln=True, align='C')
     pdf.ln(10)
-    pdf.set_font("Times", 'I', 14)
-    pdf.multi_cell(0, 10, testo, align='C')
-    return pdf.output(dest="S").encode("latin-1", "replace")
+    pdf.set_font("Arial", '', 12)
+    
+    # Pulizia caratteri speciali per evitare crash
+    testo_pulito = testo.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 10, testo_pulito, align='L')
+    
+    # Restituisce i dati pronti per il download
+    return pdf.output(dest="S")
 
 # --- INIZIALIZZAZIONE SESSIONE ---
 if 'is_pro' not in st.session_state:
@@ -81,9 +93,9 @@ st.markdown("""
 # --- NAVIGAZIONE SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align:center;'>Versi Liberi</h1>", unsafe_allow_html=True)
-    scelta = st.radio("STANZA:", ["Home", "Scrittoio", "Bacheca", "Piani"])
+    scelta = st.radio("STANZA:", ["Home", "Scrittoio", "Bacheca", "Info Demo"])
     st.markdown("---")
-    st.write("📱 Social: WhatsApp | Instagram")
+    st.info("Versione Alpha 0.1")
 
 # --- LOGICA PAGINE ---
 
@@ -96,11 +108,7 @@ elif scelta == "Scrittoio":
     st.markdown("<h1 style='font-family:Playfair Display;'>✒️ Lo Scrittoio</h1>", unsafe_allow_html=True)
     
     n_salvati = verifica_limite_demo(st.session_state.user_name)
-    
-    if not st.session_state.is_pro:
-        st.markdown(f'<div class="demo-banner">✨ MODALITÀ DEMO: {n_salvati} di 3 salvataggi usati</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="demo-banner" style="background:#d4af37; color:#1a0f08;">💎 PROFILO PRO ATTIVO</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="demo-banner">✨ MODALITÀ TEST: {n_salvati} di 3 salvataggi usati</div>', unsafe_allow_html=True)
 
     titolo = st.text_input("Titolo dell'opera", placeholder="L'anima del vento...")
     testo = st.text_area("Inizia a scrivere i tuoi versi...", height=300)
@@ -117,8 +125,8 @@ elif scelta == "Scrittoio":
     
     with col_btn1:
         if st.button("🚀 PUBBLICA IN BACHECA", use_container_width=True):
-            if not st.session_state.is_pro and n_salvati >= 3:
-                st.error("Limite demo raggiunto. Passa a PRO per pubblicare ancora!")
+            if n_salvati >= 3:
+                st.error("Limite demo raggiunto per questo utente.")
             elif titolo and testo:
                 payload = {
                     "titolo": titolo,
@@ -130,15 +138,23 @@ elif scelta == "Scrittoio":
                 if res.status_code in [200, 201]:
                     st.success("L'opera è ora immortale nella Bacheca!")
                     st.balloons()
+                    st.rerun()
                 else:
                     st.error(f"Errore tecnico: {res.text}")
             else:
                 st.warning("Titolo e Versi sono necessari per la pubblicazione.")
 
+    # CORREZIONE RIGA 144: Gestione corretta dei bytes per il download
     with col_btn2:
         if titolo and testo:
-            pdf_bytes = esporta_pdf(titolo, testo, st.session_state.user_name)
-            st.download_button("📄 SCARICA PDF", pdf_bytes, file_name=f"{titolo}.pdf", use_container_width=True)
+            raw_pdf = esporta_pdf(titolo, testo, st.session_state.user_name)
+            st.download_button(
+                label="📄 SCARICA PDF", 
+                data=bytes(raw_pdf), 
+                file_name=f"{titolo}.pdf", 
+                mime="application/pdf",
+                use_container_width=True
+            )
 
 elif scelta == "Bacheca":
     st.markdown("<h1 style='font-family:Playfair Display;'>📜 La Bacheca Comunitaria</h1>", unsafe_allow_html=True)
@@ -160,16 +176,14 @@ elif scelta == "Bacheca":
                 st.video(p['youtube_link'])
             st.markdown("<br>", unsafe_allow_html=True)
 
-elif scelta == "Piani":
-    st.markdown("<h1 style='text-align:center; font-family:Playfair Display;'>Scegli il tuo Destino</h1>", unsafe_allow_html=True)
+elif scelta == "Info Demo":
+    st.markdown("<h1 style='text-align:center; font-family:Playfair Display;'>Stato del Progetto</h1>", unsafe_allow_html=True)
+    st.info("Attualmente Versi Liberi è in fase di sviluppo sperimentale.")
+    
     p1, p2 = st.columns(2)
     with p1:
-        st.markdown('<div class="plan-card"><h2>Mensile</h2><h1>3,99€</h1><p>Versi Illimitati<br>Bacheca Privata</p></div>', unsafe_allow_html=True)
-        if st.button("ATTIVA MENSILE", key="m"):
-            st.session_state.is_pro = True
-            st.success("Sei ora un utente PRO!")
+        st.markdown('<div class="plan-card"><h2>Limiti Demo</h2><h1>3 Invii</h1><p>Test della connessione database attivo.</p></div>', unsafe_allow_html=True)
     with p2:
-        st.markdown('<div class="plan-card"><h2>Annuale</h2><h1>39,90€</h1><p>AI Inspirer<br>Tutte le funzioni</p></div>', unsafe_allow_html=True)
-        if st.button("ATTIVA ANNUALE", key="a"):
-            st.session_state.is_pro = True
-            st.success("Sei ora un utente PRO Annuale!")
+        st.markdown('<div class="plan-card"><h2>Futuro</h2><h1>Libero</h1><p>L\'attivazione delle funzioni PRO avverrà post-lancio ufficiale.</p></div>', unsafe_allow_html=True)
+    
+    st.warning("Nota legale: Questa è una demo tecnica. I pagamenti sono disabilitati e nessuna transazione reale è possibile.")
