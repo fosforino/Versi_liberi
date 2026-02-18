@@ -2,15 +2,15 @@ import streamlit as st
 import requests
 import json
 from fpdf import FPDF
-from supabase import create_client, Client
+#from supabase import create_client, Client
 
 # --- 1. CONFIGURAZIONE DATABASE (SUPABASE) ---
 # Usiamo i dati che abbiamo configurato insieme
 URL_SUPABASE = st.secrets["SUPABASE_URL"]
 KEY_SUPABASE = st.secrets["SUPABASE_KEY"]
 
-if "supabase" not in st.session_state:
-    st.session_state.supabase = create_client(URL_SUPABASE, KEY_SUPABASE)
+#if "supabase" not in st.session_state:
+#    st.session_state.supabase = create_client(URL_SUPABASE, KEY_SUPABASE)
 
 # --- 2. LOGICA BACKEND ---
 
