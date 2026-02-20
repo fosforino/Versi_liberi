@@ -1,139 +1,133 @@
 import streamlit as st
-import requests
-import json
-from fpdf import FPDF
-#from supabase import create_client, Client
+import random
+import time
+from supabase import create_client, Client
 
-# --- 1. CONFIGURAZIONE DATABASE (SUPABASE) ---
-# Usiamo i dati che abbiamo configurato insieme
+# --- 1. CONNESSIONE DATABASE ---
+# Assicurati di avere SUPABASE_URL e SUPABASE_KEY nei tuoi Secrets di Streamlit
 URL_SUPABASE = st.secrets["SUPABASE_URL"]
 KEY_SUPABASE = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(URL_SUPABASE, KEY_SUPABASE)
 
-#if "supabase" not in st.session_state:
-#    st.session_state.supabase = create_client(URL_SUPABASE, KEY_SUPABASE)
-
-# --- 2. LOGICA BACKEND ---
-
-def esporta_pdf(titolo, testo):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, titolo.upper(), ln=True, align='C')
-    pdf.ln(10)
-    pdf.set_font("Arial", '', 12)
-    testo_pulito = testo.encode('latin-1', 'replace').decode('latin-1')
-    pdf.multi_cell(0, 10, testo_pulito, align='L')
-    return pdf.output(dest="S")
-
-def pubblica_opera(titolo, versi, link_yt, tag):
-    utente = st.session_state.user
-    payload = {
-        "titolo": titolo,
-        "versi": versi,
-        "autore": utente.email,
-        "youtube_link": link_yt,
-        "tag": tag,
-        "id_utente": utente.id,
-        "likes": 0
-    }
-    try:
-        st.session_state.supabase.table("poesie").insert(payload).execute()
-        return True
-    except Exception as e:
-        st.error(f"Errore tecnico {e}")
-        return False
-
-# --- 3. INTERFACCIA E CSS ---
-st.set_page_config(page_title="Versi Liberi", page_icon="✒️", layout="wide")
+# --- 2. CONFIGURAZIONE PAGINA ED ESTETICA ---
+st.set_page_config(page_title="Poeticamente", page_icon="✍️", layout="wide")
 
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display&family=EB+Garamond&display=swap');
     .stApp { background-color: #f5eedc; background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png"); }
-    [data-testid="stSidebar"] { background-color: #1a0f08 !important; }
-    [data-testid="stSidebar"] * { color: #d4af37 !important; }
+    [data-testid="stSidebar"] { background-color: #f0f2f6 !important; }
     .poesia-card { 
-        background: white; padding: 30px; border-radius: 15px; border-left: 8px solid #d4af37; 
-        margin-bottom: 30px; box-shadow: 5px 5px 15px rgba(0,0,0,0.05); font-family: 'EB Garamond', serif;
+        background: white; padding: 25px; border-radius: 12px; border-left: 6px solid #d4af37; 
+        margin-bottom: 15px; box-shadow: 2px 2px 10px rgba(0,0,0,0.05); font-family: 'EB Garamond', serif;
     }
+    .id-tag { background: #1a0f08; color: #d4af37; padding: 3px 8px; border-radius: 4px; font-family: monospace; font-size: 0.8em; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. FUNZIONE LOGIN (CODICE MAGICO) ---
-def schermata_login():
-    st.markdown("<h1 style='text-align:center; font-family:Playfair Display;'>Versi Liberi</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;'>Inserisci la tua email per ricevere il codice di accesso</p>", unsafe_allow_html=True)
-    
-    email = st.text_input("La tua Email", placeholder="poeta@esempio.it")
-    if st.button("Invia Codice Magico"):
-        if email:
-            try:
-                st.session_state.supabase.auth.sign_in_with_otp({"email": email})
-                st.info("Controlla la tua posta! Ti abbiamo inviato il link per entrare")
-            except Exception as e:
-                st.error(f"Errore {e}")
-        else:
-            st.warning("Inserisci un email valida")
+# --- 3. LOGICA DI ACCESSO ---
+if "user_email" not in st.session_state:
+    st.markdown("<h1 style='text-align:center; font-family:Playfair Display;'>Poeticamente</h1>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    with col2:
+        email = st.text_input("Inserisci la tua Email")
+        codice = st.text_input("Codice (123456)", type="password")
+        if st.button("Entra nella tua Stanza"):
+            if email and codice == "123456":
+                st.session_state.user_email = email
+                st.rerun()
+    st.stop()
 
-# --- 5. APP PRINCIPALE ---
-def main_app():
-    with st.sidebar:
-        st.markdown("<h2 style='text-align:center;'>Stanze</h2>", unsafe_allow_html=True)
-        scelta = st.radio("", ["Scrittoio", "Bacheca", "Profilo"])
-        if st.button("Esci"):
-            st.session_state.supabase.auth.sign_out()
-            del st.session_state.user
+user_mail = st.session_state.user_email
+
+# --- 4. NAVIGAZIONE ---
+with st.sidebar:
+    st.markdown(f"### Poeticamente")
+    st.write(f"Poeta: **{user_mail}**")
+    st.divider()
+    scelta = st.radio("Spostati in:", ["Lo Scrittoio", "La Bacheca Pubblica", "Gestisci Opere"])
+    st.divider()
+    if st.button("Esci"):
+        del st.session_state.user_email
+        st.rerun()
+
+# --- 5. FUNZIONI DATABASE ---
+def carica_opere(solo_mie=False):
+    query = supabase.table("poesie").select("*")
+    if solo_mie:
+        query = query.eq("autore_email", user_mail)
+    return query.execute().data
+
+# --- SEZIONE: LO SCRITTOIO ---
+if scelta == "Lo Scrittoio":
+    st.subheader("✒️ Crea o Modifica")
+    
+    # Controllo se stiamo modificando
+    id_mod = st.session_state.get("id_in_modifica", None)
+    val_t, val_c, val_cat = "", "", "Poesia"
+    
+    if id_mod:
+        res = supabase.table("poesie").select("*").eq("id", id_mod).execute()
+        if res.data:
+            val_t, val_c, val_cat = res.data[0]['titolo'], res.data[0]['contenuto'], res.data[0]['categoria']
+            st.warning(f"Modifica in corso: {id_mod}")
+
+    titolo = st.text_input("Titolo", value=val_t)
+    cat = st.selectbox("Tipo di opera", ["Poesia", "Romanzo", "Racconto", "Video-Canzone"], index=0)
+    testo = st.text_area("Scrivi qui...", value=val_c, height=300)
+    
+    if st.button("💾 SALVA SU POETICAMENTE"):
+        if titolo and testo:
+            nuovo_id = id_mod if id_mod else f"ID-{random.randint(1000, 9999)}"
+            dati = {
+                "id": nuovo_id,
+                "titolo": titolo,
+                "contenuto": testo,
+                "categoria": cat,
+                "autore_email": user_mail
+            }
+            supabase.table("poesie").upsert(dati).execute()
+            st.success("Salvato correttamente nel database!")
+            if "id_in_modifica" in st.session_state: del st.session_state.id_in_modifica
+            time.sleep(1)
             st.rerun()
 
-    if scelta == "Scrittoio":
-        st.markdown("<h1 style='font-family:Playfair Display;'>✒️ Lo Scrittoio</h1>", unsafe_allow_html=True)
-        titolo = st.text_input("Titolo dell opera", placeholder="L anima del vento...")
-        tag = st.selectbox("Tema", ["Amore", "Natura", "Esistenza", "Libero"])
-        testo = st.text_area("Inizia a scrivere i tuoi versi...", height=300)
-        link_yt = st.text_input("Link YouTube (opzionale)")
-
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("🚀 PUBBLICA IN BACHECA", use_container_width=True):
-                if titolo and testo:
-                    if pubblica_opera(titolo, testo, link_yt, tag):
-                        st.success("L opera è ora immortale!")
-                        st.balloons()
-                else:
-                    st.warning("Compila titolo e versi")
-        with c2:
-            if titolo and testo:
-                raw_pdf = esporta_pdf(titolo, testo)
-                st.download_button("📄 SCARICA PDF", data=bytes(raw_pdf), file_name=f"{titolo}.pdf", mime="application/pdf", use_container_width=True)
-
-    elif scelta == "Bacheca":
-        st.markdown("<h1 style='font-family:Playfair Display;'>📜 La Bacheca</h1>", unsafe_allow_html=True)
-        try:
-            res = st.session_state.supabase.table("poesie").select("*").order("created_at", desc=True).execute()
-            for p in res.data:
-                st.markdown(f"""
-                <div class="poesia-card">
-                    <h2>{p['titolo']}</h2>
-                    <p style="color:#7d1d1d;">Tema: {p['tag']} | Scritta da {p['autore']}</p>
-                    <div style="white-space: pre-wrap; font-size:1.2em;">{p['versi']}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                if p.get('youtube_link'):
-                    st.video(p['youtube_link'])
-        except:
-            st.info("La bacheca è in attesa dei tuoi versi")
-
-    elif scelta == "Profilo":
-        st.header("👤 Il tuo Profilo")
-        st.write(f"Poeta collegato: {st.session_state.user.email}")
-
-# --- 6. CONTROLLO SESSIONE ---
-try:
-    session = st.session_state.supabase.auth.get_session()
-    if session and session.user:
-        st.session_state.user = session.user
-        main_app()
+# --- SEZIONE: GESTISCI OPERE ---
+elif scelta == "Gestisci Opere":
+    st.subheader("🛠️ La tua Stanza Privata")
+    mie = carica_opere(solo_mie=True)
+    if not mie:
+        st.info("Non hai ancora creato nulla.")
     else:
-        schermata_login()
-except:
-    schermata_login()
+        for o in mie:
+            with st.expander(f"{o['titolo']} ({o['categoria']})"):
+                st.write(o['contenuto'])
+                c1, c2, c3 = st.columns(3)
+                if c1.button("📝 Modifica", key=f"ed_{o['id']}"):
+                    st.session_state.id_in_modifica = o['id']
+                    st.info("Vai allo Scrittoio per modificare!")
+                if c2.button("🗑️ Elimina", key=f"del_{o['id']}"):
+                    supabase.table("poesie").delete().eq("id", o['id']).execute()
+                    st.error("Eliminato!")
+                    st.rerun()
+
+# --- SEZIONE: BACHECA ---
+elif scelta == "La Bacheca Pubblica":
+    st.subheader("📜 Opere della Community")
+    tutte = carica_opere()
+    for o in tutte:
+        st.markdown(f"""
+        <div class="poesia-card">
+            <div style="display:flex; justify-content:space-between;">
+                <span class="id-tag">{o['id']}</span>
+                <small>{o['categoria']}</small>
+            </div>
+            <h3>{o['titolo']}</h3>
+            <p style="white-space: pre-wrap;">{o['contenuto']}</p>
+            <hr>
+            <small>Scritto da: {o['autore_email']} | ❤️ {o.get('likes', 0)}</small>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button(f"Apprezza ❤️", key=f"lk_{o['id']}"):
+            supabase.table("poesie").update({"likes": o.get('likes', 0) + 1}).eq("id", o['id']).execute()
+            st.rerun()
