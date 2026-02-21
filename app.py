@@ -79,14 +79,30 @@ else:
         st.subheader("Opere Recenti")
         if supabase:
             try:
-                # Recupero dati ordinati per data
+                # Recupero dati aggiornato
                 response = supabase.table("Poesie").select("*").order("created_at", desc=True).execute()
+                
                 for p in response.data:
+                    # Visualizzazione della poesia
                     st.markdown(f"""
                     <div class="poesia-card">
                         <h3>{p['titolo']}</h3>
                         <p style="white-space: pre-wrap;">{p['versi']}</p>
+                        <p style="color: #888; font-size: 0.8em;">Autore: {p.get('autore', 'Anonimo')}</p>
                     </div>
                     """, unsafe_allow_html=True)
-            except Exception:
-                st.info("Nessuna poesia ancora pubblicata.")
+                    
+                    # Riga con bottone Like e contatore
+                    col_like, col_count = st.columns([1, 4])
+                    with col_like:
+                        if st.button(f"❤️", key=f"like_{p['id']}"):
+                            nuovi_likes = (p.get('likes') or 0) + 1
+                            supabase.table("Poesie").update({"likes": nuovi_likes}).eq("id", p['id']).execute()
+                            st.rerun()
+                    
+                    with col_count:
+                        st.write(f"{p.get('likes') or 0} apprezzamenti")
+                    
+                    st.divider()
+            except Exception as e:
+                st.error(f"Errore tecnico: {e}")
