@@ -5,7 +5,7 @@ from supabase import create_client, Client
 # 1. SETUP DELLA PAGINA
 st.set_page_config(page_title="Poeticamente", page_icon="📝", layout="centered")
 
-# 2. STILE ESTETICO (CSS) - Scritto per evitare ogni errore di indentazione
+# 2. STILE ESTETICO (CSS)
 st.markdown("""
 <style>
 .main { background-color: #fcfaf7; }
@@ -16,9 +16,8 @@ h1, h2, h3 { color: #4a4a4a; font-family: 'Georgia', serif; }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. TITOLO E AVVISO PUBBLICO
+# 3. TITOLO
 st.title("Poeticamente")
-st.warning("🚧 **Area in Manutenzione**: L'accesso alla fase Beta è riservato agli utenti autorizzati.")
 
 # 4. CONNESSIONE AL DATABASE
 @st.cache_resource
@@ -37,16 +36,16 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
-    st.markdown("### 🔐 Identificazione Autore")
+    st.warning("🚧 Area in Manutenzione: accesso riservato.")
     with st.form("login_form"):
-        email = st.text_input("Inserisci la tua Email")
+        email = st.text_input("Email")
         access_code = st.text_input("Codice di Accesso", type="password")
         if st.form_submit_button("Entra nello Scrittoio"):
             if access_code == "123456":
                 st.session_state.logged_in = True
                 st.rerun()
             else:
-                st.error("Codice non autorizzato.")
+                st.error("Codice errato.")
 else:
     # 6. APP DOPO IL LOGIN
     st.sidebar.title("Menu")
@@ -64,21 +63,30 @@ else:
         if st.button("Pubblica nel Mondo"):
             if supabase and titolo and contenuto:
                 try:
-                    supabase.table("poesie").insert({"titolo": titolo, "contenuto": contenuto}).execute()
-                    st.success("L'opera è stata pubblicata.")
+                    # Corretto: Tabella "Poesie" e colonna "versi" come da database
+                    supabase.table("Poesie").insert({
+                        "titolo": titolo, 
+                        "versi": contenuto 
+                    }).execute()
+                    st.success("L'opera è stata pubblicata!")
+                    st.balloons()
                 except Exception as e:
                     st.error(f"Errore: {e}")
             else:
-                st.warning("Verifica i campi e la connessione.")
+                st.warning("Compila tutti i campi.")
 
     with tab2:
         st.subheader("Opere Recenti")
         if supabase:
             try:
-                response = supabase.table("poesie").select("*").order("created_at", desc=True).execute()
+                # Recupero dati ordinati per data
+                response = supabase.table("Poesie").select("*").order("created_at", desc=True).execute()
                 for p in response.data:
-                    st.markdown(f'<div class="poesia-card"><h3>{p["titolo"]}</h3><p style="white-space: pre-wrap;">{p["contenuto"]}</p></div>', unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div class="poesia-card">
+                        <h3>{p['titolo']}</h3>
+                        <p style="white-space: pre-wrap;">{p['versi']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
             except Exception:
-                st.error("Errore nel caricamento.")
-        else:
-            st.info("Bacheca disponibile solo online.")
+                st.info("Nessuna poesia ancora pubblicata.")
