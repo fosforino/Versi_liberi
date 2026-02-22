@@ -66,7 +66,7 @@ else:
                     # Corretto: Tabella "Poesie" e colonna "versi" come da database
                     supabase.table("Poesie").insert({
                         "titolo": titolo, 
-                        "versi": contenuto 
+                        "versi": contenuto, 
                         "tag": tag_scelti
                     }).execute()
                     st.success("L'opera è stata pubblicata!")
