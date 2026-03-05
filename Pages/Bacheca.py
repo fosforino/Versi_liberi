@@ -1,34 +1,20 @@
 import streamlit as st
-from supabase import create_client, Client
+from supabase import create_client
 
-# --- Config Supabase ---
-URL = "https://eeavavlfgeeusijiljfw.supabase.co"
-KEY = "sb_publishable_PP-gOScRnNcN9JiD4uN4lQ_hCN0xL7j"
-supabase: Client = create_client(URL, KEY)
+# --- CONFIGURAZIONE SUPABASE ---
+URL = st.secrets["SUPABASE_URL"]
+KEY = st.secrets["SUPABASE_KEY"]
+supabase = create_client(URL, KEY)
 
-# --- Stile pergamena ---
-st.markdown("""
-<style>
-.stApp { 
-    background: linear-gradient(to bottom, #fdf5e6, #f5e1b8) !important;
-    color: #2b1d0e !important; 
-    font-family: 'EB Garamond', serif !important; 
-    padding: 20px !important;
-}
-</style>
-""", unsafe_allow_html=True)
+def show():
+    st.header("Bacheca 🖋️")
+    st.write("Qui puoi vedere tutte le poesie pubblicate dagli utenti:")
 
-st.title("📜 Bacheca Poetica")
+    # Recuperiamo solo i campi essenziali
+    res = supabase.table("Poesie").select("titolo, versi, autore").order("creat_ad", desc=True).execute()
+    poemi = res.data if res.data else []
 
-# Mostra solo poesie approvate
-res = supabase.table("Poesie").select("*").eq("approvata", True).order("id", desc=True).execute()
-poesie = res.data
-
-if poesie:
-    for opera in poesie:
-        st.markdown(f"### {opera['titolo']}")
-        st.markdown(f"_{opera['autore']}_")
-        st.markdown(f"{opera['versi']}")
+    for p in poemi:
+        st.markdown(f"**{p['titolo']}** - *{p['autore']}*")
+        st.text(p['versi'])
         st.markdown("---")
-else:
-    st.info("Non ci sono opere pubblicate al momento.")
