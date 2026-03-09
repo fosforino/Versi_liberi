@@ -119,13 +119,14 @@ if st.session_state.utente is None:
         captcha_input = st.text_input("Completa il verso: 'Nel mezzo del cammin di nostra...'")
 
         if st.button("Entra nello Scrittoio", use_container_width=True):
+            # Controllo validazione (Dante approverebbe)
             if nuovo_pseudo.strip() and email_utente.strip() and accetto_codice and captcha_input.strip().lower() == "vita":
                 st.session_state.utente = nuovo_pseudo.strip()
                 st.rerun()
             else:
                 st.error("Il calamaio è ancora vuoto o la sfida non è stata risolta. Verifica i dati.")
 else:
-    # --- INTERFACCIA PRINCIPALE ---
+    # --- INTERFACCIA PRINCIPALE (DOPO IL LOGIN) ---
     st.sidebar.markdown(f"<h2 style='text-align: center;'>Poeta:<br>{st.session_state.utente}</h2>", unsafe_allow_html=True)
     st.sidebar.markdown("---")
     
@@ -136,7 +137,10 @@ else:
     if st.sidebar.button("Congeda il Profilo", use_container_width=True):
         esegui_logout()
 
-    # --- CARICAMENTO PAGINE ---
-    if page == "Home": Home.show()
-    elif page == "Scrittoio": Scrittoio.show()
-    elif page == "Bacheca": Bacheca.show()
+    # --- CARICAMENTO PAGINE DINAMICO ---
+    if page == "Home": 
+        Home.show()
+    elif page == "Scrittoio": 
+        Scrittoio.show()
+    elif page == "Bacheca": 
+        Bacheca.show()
