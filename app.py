@@ -41,30 +41,27 @@ def apply_global_style():
 
         /* Bottoni Stile Antico (Inchiostro su Carta) */
         div.stButton > button { 
-            background-color: #4b3621 !important; /* Marrone Fondente */
-            color: #fdf5e6 !important;            /* Testo Crema Chiaro - ORA RISALTA */
-            border: 1px solid #d4af37 !important; /* Bordo Oro */
+            background-color: #4b3621 !important; 
+            color: #ffffff !important;            /* BIANCO PURO per coerenza totale */
+            border: 1px solid #d4af37 !important; 
             font-family: 'Playfair Display', serif !important; 
             font-weight: 600 !important;
             font-size: 1.1rem !important;
             border-radius: 4px !important;
             padding: 0.5rem 2rem !important;
-            width: 100% !important;               /* Occupa tutto lo spazio */
+            width: 100% !important;
             transition: 0.3s all ease;
         }
         
         div.stButton > button:hover {
-            background-color: #d4af37 !important; /* Diventa Oro al passaggio */
-            color: #2b1d0e !important;            /* Testo Scuro per contrasto */
+            background-color: #d4af37 !important; 
+            color: #2b1d0e !important;            
             border-color: #4b3621 !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        /* Input Fields personalizzati */
-        .stTextInput input, .stTextArea textarea {
-            background-color: #fffaf0 !important;
-            border: 1px solid #d2b48c !important;
-            color: #2b1d0e !important;
+        /* Forza il bianco anche per i paragrafi interni al bottone */
+        div.stButton > button p {
+            color: #ffffff !important;
         }
     </style>
     """, unsafe_allow_html=True)
