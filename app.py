@@ -1,7 +1,7 @@
 import streamlit as st
 from Pages import Home, Scrittoio, Bacheca
 
-# --- CONFIGURAZIONE STREAMLIT ---
+# --- CONFIGURAZIONE STREAMLIT (Sempre al primo posto) ---
 st.set_page_config(
     page_title="Poeticamente", 
     page_icon="🖋️", 
@@ -58,6 +58,9 @@ def apply_global_style():
 
         /* Nascondi Elementi Standard Streamlit */
         #MainMenu, footer, header {visibility: hidden;}
+        
+        /* PULIZIA SIDEBAR: Nasconde il menu "app" automatico */
+        [data-testid="stSidebarNav"] {display: none !important;}
 
         /* Box Codice d'Onore */
         .codice-onore { 
@@ -89,11 +92,11 @@ def esegui_logout():
 # --- ESECUZIONE STILE ---
 apply_global_style()
 
-# --- GESTIONE ACCESSO ---
-if "utente" not in st.session_state:
-    st.session_state.utente = None
+# --- GESTIONE ACCESSO (IL BUTTAFUORI) ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
-if st.session_state.utente is None:
+if not st.session_state.authenticated:
     # --- PAGINA DI LOGIN / IDENTIFICAZIONE ---
     st.markdown("<h1 class='poetic-title'>Poeticamente 🖋️</h1>", unsafe_allow_html=True)
     
@@ -101,8 +104,10 @@ if st.session_state.utente is None:
     
     with col_mid_2:
         st.markdown("<h3 style='text-align: center;'>Identificazione del Poeta</h3>", unsafe_allow_html=True)
+        
+        # Campi Identità
         nuovo_pseudo = st.text_input("Scegli il tuo Pseudonimo:")
-        email_utente = st.text_input("La tua Email (per l'invio dei versi):")
+        password_segreta = st.text_input("Chiave d'Accesso:", type="password") # Blindatura tecnica
         
         st.markdown("""
         <div class='codice-onore'>
@@ -119,28 +124,34 @@ if st.session_state.utente is None:
         captcha_input = st.text_input("Completa il verso: 'Nel mezzo del cammin di nostra...'")
 
         if st.button("Entra nello Scrittoio", use_container_width=True):
-            # Controllo validazione (Dante approverebbe)
-            if nuovo_pseudo.strip() and email_utente.strip() and accetto_codice and captcha_input.strip().lower() == "vita":
+            if (nuovo_pseudo.strip() and 
+                password_segreta == "Ermetico_2026" and 
+                accetto_codice and 
+                captcha_input.strip().lower() == "vita"):
+                
+                st.session_state.authenticated = True
                 st.session_state.utente = nuovo_pseudo.strip()
                 st.rerun()
             else:
-                st.error("Il calamaio è ancora vuoto o la sfida non è stata risolta. Verifica i dati.")
-else:
-    # --- INTERFACCIA PRINCIPALE (DOPO IL LOGIN) ---
-    st.sidebar.markdown(f"<h2 style='text-align: center;'>Poeta:<br>{st.session_state.utente}</h2>", unsafe_allow_html=True)
-    st.sidebar.markdown("---")
+                st.error("L'accesso è negato. Verifica la Chiave o risolvi correttamente la sfida.")
     
-    page = st.sidebar.radio("Scegli la tua meta:", ["Home", "Scrittoio", "Bacheca"])
+    st.stop()
 
-    # --- PULSANTE LOGOUT IN FONDO ALLA SIDEBAR ---
-    st.sidebar.markdown("<br><br>", unsafe_allow_html=True)
-    if st.sidebar.button("Congeda il Profilo", use_container_width=True):
-        esegui_logout()
+# --- INTERFACCIA PRINCIPALE (CARICATA SOLO SE AUTHENTICATED == TRUE) ---
+st.sidebar.markdown(f"<h2 style='text-align: center;'>Poeta:<br>{st.session_state.utente}</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("---")
 
-    # --- CARICAMENTO PAGINE DINAMICO ---
-    if page == "Home": 
-        Home.show()
-    elif page == "Scrittoio": 
-        Scrittoio.show()
-    elif page == "Bacheca": 
-        Bacheca.show()
+page = st.sidebar.radio("Scegli la tua meta:", ["Home", "Scrittoio", "Bacheca"])
+
+# --- PULSANTE LOGOUT ---
+st.sidebar.markdown("<br><br>", unsafe_allow_html=True)
+if st.sidebar.button("Congeda il Profilo", use_container_width=True):
+    esegui_logout()
+
+# --- CARICAMENTO PAGINE DINAMICO ---
+if page == "Home": 
+    Home.show()
+elif page == "Scrittoio": 
+    Scrittoio.show()
+elif page == "Bacheca": 
+    Bacheca.show()
