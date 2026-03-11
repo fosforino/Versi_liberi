@@ -81,24 +81,22 @@ def apply_login_background(image_path):
         st.markdown(
             f"""
             <style>
-            /* Forza lo sfondo su tutta l'app */
             .stApp {{
                 background: 
-                    linear-gradient(rgba(253, 245, 230, 0.8), rgba(253, 245, 230, 0.8)), 
+                    linear-gradient(rgba(253, 245, 230, 0.85), rgba(253, 245, 230, 0.85)), 
                     url("data:image/png;base64,{img_base64}");
                 background-size: cover;
                 background-position: center;
                 background-attachment: fixed;
             }}
             
-            /* Rende l'area del logo trasparente per far vedere la filigrana sotto */
-            [data-testid="stVerticalBlock"] {{
+            [data-testid="stSidebar"], [data-testid="stVerticalBlock"] {{
                 background-color: transparent !important;
             }}
 
-            /* Miglioriamo la fusione del logo centrale */
+            /* QUESTA PARTE È FONDAMENTALE PER TOGLIERE IL QUADRATO BIANCO */
             .blend-logo img {{
-                mix-blend-mode: darken; /* Meglio di multiply per i bianchi sporchi */
+                mix-blend-mode: darken !important;
                 background-color: transparent !important;
             }}
             </style>
