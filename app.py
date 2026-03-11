@@ -81,16 +81,25 @@ def apply_login_background(image_path):
         st.markdown(
             f"""
             <style>
+            /* Forza lo sfondo su tutta l'app */
             .stApp {{
-                background-image: linear-gradient(rgba(253, 245, 230, 0.85), rgba(253, 245, 230, 0.85)), 
-                                  url("data:image/png;base64,{img_base64}");
+                background: 
+                    linear-gradient(rgba(253, 245, 230, 0.8), rgba(253, 245, 230, 0.8)), 
+                    url("data:image/png;base64,{img_base64}");
                 background-size: cover;
                 background-position: center;
                 background-attachment: fixed;
             }}
-            /* Nascondi sidebar durante il login */
-            [data-testid="stSidebar"] {{
-                display: none;
+            
+            /* Rende l'area del logo trasparente per far vedere la filigrana sotto */
+            [data-testid="stVerticalBlock"] {{
+                background-color: transparent !important;
+            }}
+
+            /* Miglioriamo la fusione del logo centrale */
+            .blend-logo img {{
+                mix-blend-mode: darken; /* Meglio di multiply per i bianchi sporchi */
+                background-color: transparent !important;
             }}
             </style>
             """,
