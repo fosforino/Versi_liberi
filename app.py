@@ -1,62 +1,45 @@
 import streamlit as st
-from supabase import create_client
-import pydantic
-from Pages import Scrittoio, Bacheca
+from Pages import Home, Scrittoio, Bacheca
 
-def apply_global_style():
+# Configurazione obbligatoria (prima riga)
+st.set_page_config(page_title="Poeticamente", page_icon="✒️", layout="wide")
+
+def apply_rough_parchment():
     st.markdown("""
     <style>
-        /* SFONDO VERDINO SMERALDO DELICATO */
-        .stApp {
-            background-color: #e0f2f1 !important; 
-            background-image: none !important; 
+        /* SFONDO PERGAMENA RUVIDA GLOBALE */
+        .stApp { 
+            background-color: #f4ecd8 !important;
+            background-image: url("https://www.transparenttextures.com/patterns/parchment.png") !important;
+            background-attachment: fixed !important;
         }
 
-        /* TITOLI E TESTI */
-        h1, h2, h3, label, .stMarkdown {
-            color: #004d40 !important;
-            font-family: 'Playfair Display', serif;
+        /* STILE SIDEBAR */
+        [data-testid="stSidebar"] {
+            background-color: rgba(62, 39, 35, 0.05) !important;
+            border-right: 1px solid #c19a6b;
         }
 
-        /* INPUT E CAMPI DI TESTO */
-        input, .stTextInput > div > div > input {
-            background-color: #ffffff !important;
-            border: 2px solid #b2dfdb !important;
-            color: #004d40 !important;
-            border-radius: 8px !important;
-        }
-
-        /* BOTTONI 3D SMERALDO */
-        div.stButton > button {
-            background-color: #4db6ac !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 12px !important;
-            font-weight: bold !important;
-            text-transform: uppercase;
-            box-shadow: 0 6px 0 #00796b !important;
-            transition: all 0.1s ease-in-out !important;
-        }
-
-        div.stButton > button:active {
-            box-shadow: 0 2px 0 #00796b !important;
-            transform: translateY(4px) !important;
+        /* TITOLI ANTICATI */
+        h1, h2, h3 {
+            color: #3e2723 !important;
+            font-family: 'EB Garamond', serif !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
     </style>
     """, unsafe_allow_html=True)
 
 def main():
-    apply_global_style()
+    apply_rough_parchment()
     
     if "utente" not in st.session_state:
         st.session_state.utente = None
 
-    st.sidebar.title("Navigazione")
+    st.sidebar.title("📜 Navigazione")
     pagina = st.sidebar.radio("Vai a:", ["Home", "Scrittoio", "Bacheca"])
 
     if pagina == "Home":
-        st.markdown("<h1 style='text-align: center;'>🎨 Poeticamente</h1>", unsafe_allow_html=True)
-        # Qui va la tua logica di login...
+        Home.show()
     elif pagina == "Scrittoio":
         Scrittoio.show()
     elif pagina == "Bacheca":
