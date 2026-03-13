@@ -2,76 +2,103 @@ import streamlit as st
 from supabase import create_client
 
 def show():
-    # --- STILE SPECIFICO DELLO SCRITTOIO ---
+    # --- NUOVO STILE STRAVOLTO PER LO SCRITTOIO ---
     st.markdown("""
         <style>
-        /* Sfondo specifico per lo Scrittoio: Pergamena più calda */
+        /* SFONDO VERDINO SMERALDO DELICATO */
         .stApp {
-            background-color: #f4ecd8 !important;
-            background-image: url("https://www.transparenttextures.com/patterns/parchment.png") !important;
+            background-color: #e0f2f1 !important; /* Un verde acqua chiarissimo e fresco */
+            background-image: none !important; /* Togliamo la vecchia pergamena */
         }
 
-        /* Area di inserimento testo: Foglio di carta avorio */
+        /* TITOLO TITOLO */
+        h1 {
+            color: #004d40 !important; /* Verde pino scuro per contrasto */
+            font-family: 'Playfair Display', serif;
+            text-align: center;
+        }
+
+        /* AREA DI TESTO - Foglio di carta bianca pulita */
         textarea, input {
-            background-color: #fff9eb !important;
-            border: 1px solid #c19a6b !important;
-            color: #3e2723 !important;
-            font-family: 'EB Garamond', serif !important;
+            background-color: #ffffff !important;
+            border: 2px solid #b2dfdb !important; /* Bordo verde chiarissimo */
+            border-radius: 8px !important;
+            color: #004d40 !important;
             font-size: 1.2rem !important;
         }
 
-        /* Menu a tendina coordinato */
-        div[data-baseweb="select"] > div {
-            background-color: #fff9eb !important;
-            border: 1px solid #c19a6b !important;
+        /* --- I BOTTONI TRIDIMENSIONALI CHE CAMBIANO COLORE --- */
+        
+        /* Stile base per tutti i bottoni dello scrittoio */
+        div.stButton > button {
+            border-radius: 12px !important;
+            border: none !important;
+            font-family: 'Playfair Display', serif !important;
+            font-weight: bold !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.1s ease-in-out !important; /* Transizione veloce per il clic */
+            
+            /* L'effetto 3D: un'ombra solida e scura in basso */
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2) !important;
+            position: relative;
+            top: 0;
         }
 
-        /* BOTTONI CON EFFETTO CERALACCA / INCHIOSTRO */
-        /* Bottone Salva - Verde Bosco Profondo */
+        /* 1. BOTTONE SALVA (Verde) */
         div.stButton > button[key="btn_salva"] {
-            background: linear-gradient(145deg, #4b633a, #3a4d2d) !important;
+            background-color: #4db6ac !important; /* Verde smeraldo medio */
             color: white !important;
-            border: 1px solid #2d3a22 !important;
-            border-radius: 12px !important;
-            box-shadow: 3px 3px 6px rgba(0,0,0,0.3) !important;
-            font-weight: bold !important;
+        }
+        /* Quando ci passi sopra */
+        div.stButton > button[key="btn_salva"]:hover {
+            background-color: #80cbc4 !important; /* Si schiarisce */
+        }
+        /* QUANDO LO CLICCHI: Il cambio colore e movimento */
+        div.stButton > button[key="btn_salva"]:active {
+            background-color: #00796b !important; /* Diventa verde scuro e saturo */
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important; /* L'ombra si riduce */
+            top: 4px; /* Il bottone si abbassa */
         }
 
-        /* Bottone Stampa - Blu Notte Inchiostro */
+        /* 2. BOTTONE STAMPA (Blu) */
         div.stButton > button[key="btn_stampa"] {
-            background: linear-gradient(145deg, #2c3e50, #1a252f) !important;
+            background-color: #4fc3f7 !important; /* Blu cielo */
             color: white !important;
-            border: 1px solid #141d26 !important;
-            border-radius: 12px !important;
-            box-shadow: 3px 3px 6px rgba(0,0,0,0.3) !important;
-            font-weight: bold !important;
+        }
+        div.stButton > button[key="btn_stampa"]:hover {
+            background-color: #81d4fa !important;
+        }
+        div.stButton > button[key="btn_stampa"]:active {
+            background-color: #0277bd !important; /* Diventa blu scuro */
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important;
+            top: 4px;
         }
 
-        /* Bottone Elimina - Rosso Sangue di Drago */
+        /* 3. BOTTONE BRUCIA/ELIMINA (Rosso) */
         div.stButton > button[key="btn_cancella"] {
-            background: linear-gradient(145deg, #a93226, #7b241c) !important;
+            background-color: #ef5350 !important; /* Rosso corallo */
             color: white !important;
-            border: 1px solid #641e16 !important;
-            border-radius: 12px !important;
-            box-shadow: 3px 3px 6px rgba(0,0,0,0.3) !important;
         }
-
-        /* Effetto al passaggio del mouse */
-        div.stButton > button:hover {
-            transform: translateY(-2px) !important;
-            filter: brightness(1.2) !important;
+        div.stButton > button[key="btn_cancella"]:hover {
+            background-color: #e57373 !important;
+        }
+        div.stButton > button[key="btn_cancella"]:active {
+            background-color: #c62828 !important; /* Diventa rosso scuro */
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important;
+            top: 4px;
         }
         </style>
         """, unsafe_allow_html=True)
 
-    # --- LOGICA SUPABASE ---
+    # --- LOGICA SUPABASE (Invariata) ---
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
     supabase = create_client(url, key)
 
     if "utente" in st.session_state:
         nome_poeta = st.session_state.utente
-        st.markdown(f"<h1 style='text-align: center; color: #5d4037;'>✒️ Lo Scrittoio di {nome_poeta}</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h1>✒️ Lo Scrittoio di {nome_poeta}</h1>", unsafe_allow_html=True)
 
         try:
             res = supabase.table("Opere").select("*").eq("autore_email", nome_poeta).order("creato_il", desc=True).execute()
@@ -107,7 +134,7 @@ def show():
                         supabase.table("Opere").update(dati).eq("id", opera_corrente['id']).execute()
                     else:
                         supabase.table("Opere").insert(dati).execute()
-                    st.success("Versi custoditi con cura.")
+                    st.success("Versi custoditi.")
                     st.rerun()
                 else:
                     st.warning("Un'opera ha bisogno di un titolo.")
