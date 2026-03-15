@@ -50,9 +50,21 @@ def apply_global_style(image_path):
             pointer-events: none;
         }
 
-        /* --- SIDEBAR RESPONSIVE & CLEAN --- */
+        /* --- GESTIONE SIDEBAR E SPAZIO GRIGIO --- */
         [data-testid="stSidebarNav"] {
             display: none;
+        }
+
+        /* Se la sidebar è chiusa o non necessaria, azzeriamo il margine */
+        [data-testid="stSidebar"][aria-expanded="false"] {
+            margin-left: -260px;
+        }
+
+        /* Bilanciamento contenuto centrale */
+        .main .block-container {
+            max-width: 1000px;
+            padding-top: 2rem;
+            margin: auto;
         }
 
         /* Solo per schermi grandi (Computer) */
@@ -60,6 +72,7 @@ def apply_global_style(image_path):
             section[data-testid="stSidebar"] {
                 width: 260px !important;
                 min-width: 260px !important;
+                background-color: rgba(253, 245, 230, 0.5) !important;
             }
         }
 
@@ -103,6 +116,9 @@ if "authenticated" not in st.session_state:
 
 # --- LOGICA DI ACCESSO ---
 if not st.session_state.authenticated:
+    # Qui forziamo la chiusura visiva della sidebar per evitare il grigio
+    st.markdown("<style>[data-testid='stSidebar'] {display: none;}</style>", unsafe_allow_html=True)
+    
     col_logo_1, col_logo_2, col_logo_3 = st.columns([1, 0.6, 1])
     with col_logo_2:
         if os.path.exists(path_icona):
