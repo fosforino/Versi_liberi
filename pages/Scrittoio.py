@@ -98,10 +98,10 @@ def show():
 
             atmosfere = {
                 "Personalizzato": "",
-                "📜 Antica Pergamena": "https://img.freepik.com/free-photo/vintage-paper-texture_1194-544.jpg",
-                "🌌 Notte Stellata": "https://images.unsplash.com/photo-1519681393784-d120267933ba",
-                "🍃 Bosco Nebbioso": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
-                "🏙️ Grattacielo": "https://images.unsplash.com/photo-1449156003053-c30670b9883c"
+                "📜 Antica Pergamena": "https://www.transparenttextures.com/patterns/papyrus.png",
+                "🌌 Notte Stellata": "https://images.unsplash.com/photo-1506318137071-a8e063b4bcc0?q=80&w=1000&auto=format&fit=crop",
+                "🍃 Bosco Nebbioso": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1000&auto=format&fit=crop",
+                "🏙️ Grattacielo": "https://images.unsplash.com/photo-1449156003053-c30670b9883c?q=80&w=1000&auto=format&fit=crop"
             }
             scelta_atm = st.selectbox("🎭 Scegli un'atmosfera pronta:", list(atmosfere.keys()))
             
