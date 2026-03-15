@@ -29,7 +29,6 @@ def apply_global_style(image_path):
     <style>
         @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
 
-        /* SFONDO PERGAMENA */
         .stApp { 
             background-color: #fdf5e6 !important;
             background-image: url("https://www.transparenttextures.com/patterns/handmade-paper.png") !important;
@@ -37,67 +36,40 @@ def apply_global_style(image_path):
             font-family: 'EB Garamond', serif !important; 
         }
 
-        /* FILIGRANA SFOCATA */
         .bg-watermark {
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 70vw;
-            opacity: 0.07;
-            filter: blur(8px);
-            z-index: -1;
-            pointer-events: none;
+            width: 70vw; opacity: 0.07; filter: blur(8px);
+            z-index: -1; pointer-events: none;
         }
 
-        /* --- GESTIONE SIDEBAR E SPAZIO GRIGIO --- */
-        [data-testid="stSidebarNav"] {
-            display: none;
+        [data-testid="stSidebarNav"] { display: none; }
+
+        @media (min-width: 992px) {
+            section[data-testid="stSidebar"] {
+                width: 260px !important;
+                min-width: 260px !important;
+            }
         }
 
-        /* Se la sidebar è chiusa o non necessaria, azzeriamo il margine */
-        [data-testid="stSidebar"][aria-expanded="false"] {
-            margin-left: -260px;
-        }
-
-        /* Bilanciamento contenuto centrale */
         .main .block-container {
             max-width: 1000px;
             padding-top: 2rem;
             margin: auto;
         }
 
-        /* Solo per schermi grandi (Computer) */
-        @media (min-width: 992px) {
-            section[data-testid="stSidebar"] {
-                width: 260px !important;
-                min-width: 260px !important;
-                background-color: rgba(253, 245, 230, 0.5) !important;
-            }
-        }
-
-        /* MENU E BOTTONI */
-        div[data-baseweb="select"] > div {
-            background-color: #fdf5e6 !important;
-            border: 1px solid #3e2723 !important;
-            border-radius: 8px;
-        }
-        
         div.stButton > button { 
             background-color: #3e2723 !important; 
             color: #fdf5e6 !important; 
             border: 1px solid #c19a6b !important; 
-            font-family: 'Playfair Display', serif !important; 
             border-radius: 8px !important;
-            transition: 0.3s all ease;
         }
         
         .poetic-title { 
             font-family: 'Playfair Display', serif; 
-            font-size: 4rem; 
-            text-align: center; 
-            color: #3e2723; 
-            margin-top: -20px;
+            font-size: 4rem; text-align: center; 
+            color: #3e2723; margin-top: -20px;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -107,7 +79,6 @@ def esegui_logout():
         del st.session_state[key]
     st.rerun()
 
-# --- AVVIO STILE ---
 path_icona = "Poeticamente.png" 
 apply_global_style(path_icona)
 
@@ -116,13 +87,13 @@ if "authenticated" not in st.session_state:
 
 # --- LOGICA DI ACCESSO ---
 if not st.session_state.authenticated:
-    # Qui forziamo la chiusura visiva della sidebar per evitare il grigio
     st.markdown("<style>[data-testid='stSidebar'] {display: none;}</style>", unsafe_allow_html=True)
     
     col_logo_1, col_logo_2, col_logo_3 = st.columns([1, 0.6, 1])
     with col_logo_2:
         if os.path.exists(path_icona):
-            st.image(path_icona, use_container_width=True)
+            # FIX: rimosso use_container_width per conformità 2026
+            st.image(path_icona, width=250)
     
     st.markdown("<h1 class='poetic-title'>Poeticamente</h1>", unsafe_allow_html=True)
     
@@ -144,7 +115,7 @@ if not st.session_state.authenticated:
                 st.error("La chiave o il giuramento non sono validi.")
     st.stop()
 
-# --- SIDEBAR E NAVIGAZIONE ---
+# --- SIDEBAR ---
 with st.sidebar:
     if os.path.exists(path_icona):
         st.image(path_icona, width=150)
@@ -155,12 +126,8 @@ with st.sidebar:
     if st.button("Congeda il Profilo"):
         esegui_logout()
 
-# --- NAVIGAZIONE PAGINE ---
-if page == "Home": 
-    Home.show()
-elif page == "Scrittoio": 
-    Scrittoio.show()
-elif page == "Bacheca": 
-    Bacheca.show()
-elif page == "Archivio":
-    Archivio.show()
+# --- NAVIGAZIONE ---
+if page == "Home": Home.show()
+elif page == "Scrittoio": Scrittoio.show()
+elif page == "Bacheca": Bacheca.show()
+elif page == "Archivio": Archivio.show()

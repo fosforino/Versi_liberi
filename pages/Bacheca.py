@@ -2,7 +2,7 @@ import streamlit as st
 from supabase import create_client
 import os
 import base64
-import urllib.parse  # Per codificare i testi dei link social
+import urllib.parse
 
 def get_base64_image(image_path):
     if os.path.exists(image_path):
@@ -11,34 +11,26 @@ def get_base64_image(image_path):
     return None
 
 def apply_aesthetic_style():
-    """Applica l'estetica vintage e la filigrana alla Bacheca."""
     path_icona = "Poeticamente.png"
     img_base64 = get_base64_image(path_icona)
     img_html = f'<img src="data:image/png;base64,{img_base64}" class="bg-watermark-bacheca">' if img_base64 else ""
 
     st.markdown(f"""
         <style>
-        /* Sfondo Pergamena */
         .stApp {{
             background-color: #fdf5e6;
             background-image: url("https://www.transparenttextures.com/patterns/handmade-paper.png");
             color: #3e2723;
         }}
 
-        /* ICONA FILIGRANA */
         .bg-watermark-bacheca {{
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 60vw;
-            opacity: 0.05;
-            filter: blur(10px);
-            z-index: -1;
-            pointer-events: none;
+            width: 60vw; opacity: 0.05; filter: blur(10px);
+            z-index: -1; pointer-events: none;
         }}
 
-        /* Contenitore Poesia */
         .poesia-card {{
             background-color: rgba(255, 250, 240, 0.8);
             padding: 35px;
@@ -59,7 +51,6 @@ def apply_aesthetic_style():
             color: #3e2723;
             font-size: 2rem;
             margin-bottom: 10px;
-            text-align: left;
         }}
 
         .versi-testo {{
@@ -79,17 +70,15 @@ def apply_aesthetic_style():
             font-size: 1rem;
             border-top: 1px solid rgba(193, 154, 107, 0.3);
             padding-top: 15px;
-            margin-bottom: 10px;
         }}
 
-        /* Stile per i link social */
         .social-box {{
-            display: flex;
-            gap: 15px;
+            display: flex; gap: 15px;
             justify-content: flex-start;
             margin-top: 10px;
             padding-bottom: 20px;
         }}
+
         .social-link {{
             text-decoration: none;
             font-size: 0.9rem;
@@ -114,19 +103,19 @@ def show():
     st.markdown("<h1 style='font-size: 3.5rem; text-align: center;'>Bacheca Poetica</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-style: italic; font-size: 1.2rem; color: #795548; margin-bottom: 60px;'>Le voci dei poeti si rincorrono tra i fogli del tempo.</p>", unsafe_allow_html=True)
     
-    # --- CONNESSIONE SUPABASE ---
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
     supabase = create_client(url, key)
 
     try:
-        res = supabase.table("Opere").select("*").order("created_at", desc=True).limit(20).execute()
+        # --- FILTRO PUBBLICAZIONE AGGIUNTO QUI ---
+        res = supabase.table("Opere").select("*").eq("pubblica", True).order("created_at", desc=True).limit(20).execute()
         poemi = res.data if res.data else []
 
         if not poemi:
-            st.info("La bacheca è ancora bianca. Sii il primo a lasciare un'impronta!")
+            st.info("La bacheca è ancora bianca. Sii il primo ad affiggere un'opera dallo Scrittoio!")
         
-        col_m_1, col_m_2, col_m_3 = st.columns([0.2, 1, 0.2])
+        col_m_1, col_m_2, col_m_3 = st.columns([0.1, 1, 0.1])
         
         with col_m_2:
             for p in poemi:
@@ -135,7 +124,6 @@ def show():
                 autore = p.get('autore', 'Poeta Anonimo')
                 categoria = p.get('categoria', 'Poesia')
                 
-                # Visualizzazione Poesia
                 st.markdown(
                     f"""
                     <div class="poesia-card">
@@ -148,14 +136,12 @@ def show():
                     unsafe_allow_html=True
                 )
 
-                # --- LOGICA SOCIAL ---
                 testo_share = f"✨ *{titolo}*\n\n{testo}\n\n— Poeta: {autore}\n\n_Condiviso da Poeticamente_"
                 testo_url = urllib.parse.quote(testo_share)
                 
                 wa_link = f"https://wa.me/?text={testo_url}"
                 mail_link = f"mailto:?subject=Poesia: {titolo}&body={testo_url}"
 
-                # Bottoni sotto la card
                 st.markdown(f"""
                     <div class="social-box">
                         <a href="{wa_link}" target="_blank" class="social-link">📱 WhatsApp</a>

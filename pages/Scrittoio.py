@@ -13,7 +13,6 @@ def get_base64_image(image_path):
 def genera_pdf(titolo, categoria, contenuto, autore):
     pdf = FPDF()
     pdf.add_page()
-    # Utilizziamo font standard che supportano meglio la codifica base
     pdf.set_font("Times", 'B', 24)
     pdf.cell(0, 20, titolo.encode('latin-1', 'replace').decode('latin-1'), ln=True, align='C')
     pdf.set_font("Times", 'I', 12)
@@ -37,7 +36,6 @@ def show():
         .bg-watermark-scrittoio {{ position: fixed; top: 50%; left: 55%; transform: translate(-50%, -50%); width: 50vw; opacity: 0.05; filter: blur(12px); z-index: -1; pointer-events: none; }}
         .stTextArea textarea {{ background-color: rgba(255, 250, 240, 0.7) !important; border: 1px solid #c19a6b !important; border-radius: 5px !important; font-family: 'EB Garamond', serif !important; font-size: 1.3rem !important; color: #3e2723 !important; }}
         
-        /* Bottoni stilizzati */
         div.stButton > button {{ border: none !important; color: white !important; font-weight: bold !important; padding: 0.6em 1.2em !important; border-radius: 8px !important; text-transform: uppercase; transition: 0.3s; }}
         div.stButton > button:hover {{ opacity: 0.9; transform: translateY(-2px); }}
         
@@ -48,7 +46,6 @@ def show():
         {img_html}
         """, unsafe_allow_html=True)
 
-    # Inizializzazione client Supabase
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
     supabase = create_client(url, key)
@@ -57,7 +54,6 @@ def show():
         nome_poeta = st.session_state.utente
         st.markdown(f"<h1 style='text-align: center; color: #3e2723;'>✒️ Lo Scrittoio di {nome_poeta}</h1>", unsafe_allow_html=True)
 
-        # Recupero opere dell'utente
         try:
             res = supabase.table("Opere").select("*").eq("autore", nome_poeta).order("created_at", desc=True).execute()
             opere = res.data if res.data else []
@@ -65,15 +61,14 @@ def show():
             st.error(f"Errore nel recupero opere: {e}")
             opere = []
 
-        # Sidebar per caricamento
         scelta = st.sidebar.selectbox("📖 Carica un'opera:", ["Nuova Opera"] + [o['titolo'] for o in opere])
         opera_corrente = next((o for o in opere if o['titolo'] == scelta), None)
         
         v_titolo = opera_corrente['titolo'] if opera_corrente else ""
         v_testo = opera_corrente['versi'] if opera_corrente else ""
         v_cat = opera_corrente.get('categoria', "Poesia") if opera_corrente else "Poesia"
+        v_pubblica = opera_corrente.get('pubblica', False) if opera_corrente else False
 
-        # Campi Input
         col_t, col_c = st.columns([2, 1])
         with col_t:
             titolo = st.text_input("Titolo dell'Opera", value=v_titolo)
@@ -82,9 +77,17 @@ def show():
             idx = cats.index(v_cat) if v_cat in cats else 0
             categoria = st.selectbox("Categoria", cats, index=idx)
 
-        contenuto = st.text_area("Versi e Pensieri", value=v_testo, height=450)
+        contenuto = st.text_area("Versi e Pensieri", value=v_testo, height=400)
         
-        # Pulsantiera
+        # --- NUOVA OPZIONE PUBBLICAZIONE ---
+        st.markdown("---")
+        pubblica = st.toggle("📢 Affiggi in Bacheca (Rendi l'opera pubblica)", value=v_pubblica)
+        if pubblica:
+            st.caption("✨ L'opera sarà visibile a tutti i poeti nella Bacheca Comune.")
+        else:
+            st.caption("🔒 L'opera resterà custodita solo nel tuo archivio privato.")
+        st.markdown("---")
+
         b1, b2, b3 = st.columns([1, 1, 1])
 
         with b1:
@@ -95,7 +98,8 @@ def show():
                             "titolo": titolo, 
                             "versi": contenuto, 
                             "categoria": categoria, 
-                            "autore": nome_poeta
+                            "autore": nome_poeta,
+                            "pubblica": pubblica  # Salviamo lo stato di pubblicazione
                         }
                         if opera_corrente:
                             supabase.table("Opere").update(dati).eq("id", opera_corrente['id']).execute()
@@ -107,19 +111,13 @@ def show():
                     except Exception as e:
                         st.error(f"Il calamaio è asciutto: {e}")
                 else:
-                    st.warning("Dai un titolo e un'anima ai tuoi versi prima di salvarli.")
+                    st.warning("Dai un titolo e un'anima ai tuoi versi.")
 
         with b2:
             if titolo and contenuto:
                 try:
                     pdf_data = genera_pdf(titolo, categoria, contenuto, nome_poeta)
-                    st.download_button(
-                        label="🖨️ Scarica PDF", 
-                        data=pdf_data, 
-                        file_name=f"{titolo}.pdf", 
-                        mime="application/pdf", 
-                        key="btn_stampa"
-                    )
+                    st.download_button(label="🖨️ Scarica PDF", data=pdf_data, file_name=f"{titolo}.pdf", mime="application/pdf", key="btn_stampa")
                 except Exception as e:
                     st.error(f"Errore stampa: {e}")
 
@@ -130,7 +128,7 @@ def show():
                         supabase.table("Opere").delete().eq("id", opera_corrente['id']).execute()
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Il fuoco non ha preso: {e}")
+                        st.error(f"Errore: {e}")
     else:
         st.warning("Identificati nella Home per accedere allo Scrittoio.")
 
