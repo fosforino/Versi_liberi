@@ -20,13 +20,11 @@ def get_base64_image(image_path):
 def apply_global_style(image_path):
     img_base64 = get_base64_image(image_path)
     
-    # 1. Iniettiamo prima l'immagine come HTML puro (fuori dallo stile)
     if img_base64:
         st.markdown(f"""
             <img src="data:image/png;base64,{img_base64}" class="bg-watermark">
         """, unsafe_allow_html=True)
 
-    # 2. Poi iniettiamo il CSS
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
@@ -52,9 +50,17 @@ def apply_global_style(image_path):
             pointer-events: none;
         }
 
-        /* NASCONDE MENU AUTOMATICO SIDEBAR */
+        /* --- SIDEBAR RESPONSIVE & CLEAN --- */
         [data-testid="stSidebarNav"] {
             display: none;
+        }
+
+        /* Solo per schermi grandi (Computer) */
+        @media (min-width: 992px) {
+            section[data-testid="stSidebar"] {
+                width: 260px !important;
+                min-width: 260px !important;
+            }
         }
 
         /* MENU E BOTTONI */
@@ -122,7 +128,7 @@ if not st.session_state.authenticated:
                 st.error("La chiave o il giuramento non sono validi.")
     st.stop()
 
-# --- SIDEBAR E NAVIGAZIONE (DOPO LOGIN) ---
+# --- SIDEBAR E NAVIGAZIONE ---
 with st.sidebar:
     if os.path.exists(path_icona):
         st.image(path_icona, width=150)
