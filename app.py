@@ -132,4 +132,4 @@ with st.sidebar:
 # --- NAVIGAZIONE PAGINE ---
 if page == "Home": Home.show()
 elif page == "Scrittoio": Scrittoio.show()
-elif page == "Bacheca": Bacheca.show()
+elif page == "Bacheca": Bacheca.show()streamlit run app.py
