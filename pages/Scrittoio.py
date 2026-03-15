@@ -36,24 +36,20 @@ def show():
         .stApp {{ background-color: #fdf5e6 !important; background-image: url("https://www.transparenttextures.com/patterns/handmade-paper.png") !important; }}
         .bg-watermark-scrittoio {{ position: fixed; top: 50%; left: 55%; transform: translate(-50%, -50%); width: 50vw; opacity: 0.05; filter: blur(12px); z-index: -1; pointer-events: none; }}
         
-        /* Box di testo base */
         .stTextArea textarea {{ 
             border: 1px solid #c19a6b !important; 
             border-radius: 5px !important; 
             font-family: 'EB Garamond', serif !important; 
             font-size: 1.3rem !important; 
-            color: #3e2723 !important;
+            color: #3e2723 !important; 
             transition: all 0.3s ease;
         }}
         
-        /* Stile pulsanti */
         div.stButton > button {{ border: none !important; color: white !important; font-weight: bold !important; padding: 0.6em 1.2em !important; border-radius: 8px !important; text-transform: uppercase; transition: 0.3s; }}
         div.stButton > button:hover {{ opacity: 0.9; transform: translateY(-2px); }}
         div.stButton > button[key="btn_salva"] {{ background: #2e7d32 !important; box-shadow: 0 4px 0 #1b5e20; }}
         div.stButton > button[key="btn_stampa"] {{ background: #455a64 !important; box-shadow: 0 4px 0 #263238; }}
         div.stButton > button[key="btn_cancella"] {{ background: #8e0000 !important; box-shadow: 0 4px 0 #4a0000; }}
-        
-        .expander-stile {{ background-color: rgba(193, 154, 107, 0.1); border-radius: 10px; padding: 10px; margin-bottom: 20px; border: 1px solid #c19a6b; }}
         </style>
         {img_html}
         """, unsafe_allow_html=True)
@@ -91,39 +87,47 @@ def show():
             idx = cats.index(v_cat) if v_cat in cats else 0
             categoria = st.selectbox("Categoria", cats, index=idx)
 
-        # --- SEZIONE LAYOUT AGGIORNATA ---
+        # --- SEZIONE LAYOUT E ATMOSFERE ---
         with st.expander("🎨 Impostazioni Grafiche ed Editoriali"):
             st.write("🔍 **Trova l'ispirazione su:**")
             l1, l2, l3 = st.columns(3)
-            l1.markdown("[📸 Unsplash](https://unsplash.com)", help="Foto gratuite")
-            l2.markdown("[🎨 Pixabay](https://pixabay.com)", help="Immagini e illustrazioni")
-            l3.markdown("[💎 Adobe Stock](https://stock.adobe.com)", help="Contenuti premium")
-            
+            l1.markdown("[📸 Unsplash](https://unsplash.com)")
+            l2.markdown("[🎨 Pixabay](https://pixabay.com)")
+            l3.markdown("[💎 Adobe Stock](https://stock.adobe.com)")
             st.divider()
+
+            atmosfere = {
+                "Personalizzato": "",
+                "📜 Antica Pergamena": "https://img.freepik.com/free-photo/vintage-paper-texture_1194-544.jpg",
+                "🌌 Notte Stellata": "https://images.unsplash.com/photo-1519681393784-d120267933ba",
+                "🍃 Bosco Nebbioso": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
+                "🏙️ Grattacielo": "https://images.unsplash.com/photo-1449156003053-c30670b9883c"
+            }
+            scelta_atm = st.selectbox("🎭 Scegli un'atmosfera pronta:", list(atmosfere.keys()))
             
-            img_url = st.text_input("🔗 Link Immagine dal Web:", value=v_img)
+            if scelta_atm != "Personalizzato":
+                img_url = atmosfere[scelta_atm]
+            else:
+                img_url = st.text_input("🔗 Link Immagine dal Web:", value=v_img, placeholder="Fai tasto destro sulla foto -> Copia indirizzo immagine")
+            
             file_pc = st.file_uploader("💻 Oppure carica dal tuo PC:", type=["jpg", "png", "jpeg"])
             
             c1, c2 = st.columns(2)
             with c1:
-                width_val = v_stile.get("width", 100)
-                width_img = st.slider("Larghezza Immagine (%)", 10, 100, int(width_val))
+                width_img = st.slider("Larghezza Immagine (%)", 10, 100, int(v_stile.get("width", 100)))
             with c2:
-                opac_val = v_stile.get("opacity", 1.0)
-                opac_img = st.slider("Opacità Immagine", 0.1, 1.0, float(opac_val))
+                opac_img = st.slider("Opacità Immagine", 0.1, 1.0, float(v_stile.get("opacity", 0.5)))
             
-            pos_options = ["Sopra il testo", "Sotto il testo", "Sfondo"]
-            v_pos = v_stile.get("position", "Sopra il testo")
-            pos_idx = pos_options.index(v_pos) if v_pos in pos_options else 0
-            posizione = st.selectbox("Posizione Immagine", pos_options, index=pos_idx)
+            posizione = st.selectbox("Posizione Immagine", ["Sfondo", "Sopra il testo", "Sotto il testo"], 
+                                     index=["Sfondo", "Sopra il testo", "Sotto il testo"].index(v_stile.get("position", "Sfondo")))
 
-        # Logica per determinare l'immagine finale
+        # Logica immagine finale
         img_final = img_url
         if file_pc:
             b64 = base64.b64encode(file_pc.read()).decode()
             img_final = f"data:image/png;base64,{b64}"
 
-        # CSS DINAMICO PER LO SFONDO DELL'AREA DI TESTO (BLINDATO)
+        # APPLICAZIONE CSS BLINDATA
         if img_final and posizione == "Sfondo":
             st.markdown(f"""
                 <style>
@@ -132,13 +136,14 @@ def show():
                     background-size: {width_img}% !important;
                     background-position: center !important;
                     background-repeat: no-repeat !important;
+                    background-attachment: local !important;
                     background-blend-mode: lighten !important;
                     background-color: rgba(255, 250, 240, {1 - opac_img}) !important;
                 }}
                 </style>
             """, unsafe_allow_html=True)
         elif img_final and posizione != "Sfondo":
-            st.markdown(f'<div style="text-align:center; opacity:{opac_img};"><img src="{img_final}" style="width:{width_img}%;"></div>', unsafe_allow_html=True)
+             st.markdown(f'<div style="text-align:center; opacity:{opac_img};"><img src="{img_final}" style="width:{width_img}%;"></div>', unsafe_allow_html=True)
 
         contenuto = st.text_area("Versi e Pensieri", value=v_testo, height=400)
         pubblica = st.toggle("📢 Affiggi in Bacheca (Pubblica)", value=v_pubblica)
@@ -153,7 +158,7 @@ def show():
                         stile_data = {"width": width_img, "opacity": opac_img, "position": posizione}
                         dati = {
                             "titolo": titolo, "versi": contenuto, "categoria": categoria, 
-                            "autore": nome_poeta, "pubblica": pubblica, "immagine_url": img_url if not file_pc else "Immagine caricata da PC",
+                            "autore": nome_poeta, "pubblica": pubblica, "immagine_url": img_url if not file_pc else "PC",
                             "stile_layout": stile_data
                         }
                         if opera_corrente:
@@ -163,7 +168,7 @@ def show():
                         st.success("L'opera è stata impaginata e custodita.")
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Errore salvataggio: {e}")
+                        st.error(f"Errore: {e}")
                 else:
                     st.warning("Inserisci titolo e testo.")
 
