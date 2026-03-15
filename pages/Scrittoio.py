@@ -58,7 +58,7 @@ def show():
             res = supabase.table("Opere").select("*").eq("autore", nome_poeta).order("created_at", desc=True).execute()
             opere = res.data if res.data else []
         except Exception as e:
-            st.error(f"Errore nel recupero opere: {e}")
+            st.error(f"Errore recupero: {e}")
             opere = []
 
         scelta = st.sidebar.selectbox("📖 Carica un'opera:", ["Nuova Opera"] + [o['titolo'] for o in opere])
@@ -68,6 +68,7 @@ def show():
         v_testo = opera_corrente['versi'] if opera_corrente else ""
         v_cat = opera_corrente.get('categoria', "Poesia") if opera_corrente else "Poesia"
         v_pubblica = opera_corrente.get('pubblica', False) if opera_corrente else False
+        v_img = opera_corrente.get('immagine_url', "") if opera_corrente else ""
 
         col_t, col_c = st.columns([2, 1])
         with col_t:
@@ -77,17 +78,20 @@ def show():
             idx = cats.index(v_cat) if v_cat in cats else 0
             categoria = st.selectbox("Categoria", cats, index=idx)
 
+        # --- CAMPO IMMAGINE ---
+        img_url = st.text_input("🔗 Link Immagine dal Web (opzionale):", value=v_img)
+        if img_url:
+            try:
+                st.image(img_url, caption="Anteprima Copertina", width=300)
+            except:
+                st.warning("Immagine non visualizzabile. Verifica il link.")
+
         contenuto = st.text_area("Versi e Pensieri", value=v_testo, height=400)
         
-        # --- NUOVA OPZIONE PUBBLICAZIONE ---
-        st.markdown("---")
+        # --- PUBBLICAZIONE ---
         pubblica = st.toggle("📢 Affiggi in Bacheca (Rendi l'opera pubblica)", value=v_pubblica)
-        if pubblica:
-            st.caption("✨ L'opera sarà visibile a tutti i poeti nella Bacheca Comune.")
-        else:
-            st.caption("🔒 L'opera resterà custodita solo nel tuo archivio privato.")
+        
         st.markdown("---")
-
         b1, b2, b3 = st.columns([1, 1, 1])
 
         with b1:
@@ -99,7 +103,8 @@ def show():
                             "versi": contenuto, 
                             "categoria": categoria, 
                             "autore": nome_poeta,
-                            "pubblica": pubblica  # Salviamo lo stato di pubblicazione
+                            "pubblica": pubblica,
+                            "immagine_url": img_url
                         }
                         if opera_corrente:
                             supabase.table("Opere").update(dati).eq("id", opera_corrente['id']).execute()
@@ -109,28 +114,22 @@ def show():
                         st.success("Versi custoditi nel tempo.")
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Il calamaio è asciutto: {e}")
+                        st.error(f"Errore salvataggio: {e}")
                 else:
-                    st.warning("Dai un titolo e un'anima ai tuoi versi.")
+                    st.warning("Inserisci titolo e testo.")
 
         with b2:
             if titolo and contenuto:
-                try:
-                    pdf_data = genera_pdf(titolo, categoria, contenuto, nome_poeta)
-                    st.download_button(label="🖨️ Scarica PDF", data=pdf_data, file_name=f"{titolo}.pdf", mime="application/pdf", key="btn_stampa")
-                except Exception as e:
-                    st.error(f"Errore stampa: {e}")
+                pdf_data = genera_pdf(titolo, categoria, contenuto, nome_poeta)
+                st.download_button("🖨️ Scarica PDF", data=pdf_data, file_name=f"{titolo}.pdf", mime="application/pdf", key="btn_stampa")
 
         with b3:
             if opera_corrente:
                 if st.button("🗑️ Brucia", key="btn_cancella"):
-                    try:
-                        supabase.table("Opere").delete().eq("id", opera_corrente['id']).execute()
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Errore: {e}")
+                    supabase.table("Opere").delete().eq("id", opera_corrente['id']).execute()
+                    st.rerun()
     else:
-        st.warning("Identificati nella Home per accedere allo Scrittoio.")
+        st.warning("Identificati nella Home.")
 
 if __name__ == "__main__":
     show()
